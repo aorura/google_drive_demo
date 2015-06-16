@@ -24,14 +24,21 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveApi.DriveContentsResult;
 import com.google.android.gms.drive.DriveApi.DriveIdResult;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.Metadata;
+import com.google.android.gms.drive.MetadataBuffer;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
 
 /**
  * Activity to illustrate how to retrieve and read file contents.
@@ -51,17 +58,35 @@ public class RetrieveContentsActivity extends BaseDemoActivity {
     @Override
     public void onConnected(Bundle connectionHint) {
         super.onConnected(connectionHint);
-        Drive.DriveApi.fetchDriveId(getGoogleApiClient(), EXISTING_FILE_ID)
-                .setResultCallback(idCallback);
+
+        Query query = new Query.Builder()
+                .addFilter(Filters.or(
+                        Filters.eq(SearchableField.MIME_TYPE, "image/png"),
+                        Filters.eq(SearchableField.MIME_TYPE, "image/jpeg")))
+                .build();
+
+        Drive.DriveApi.query(getGoogleApiClient(), query)
+                .setResultCallback(metadataCallback);
+
     }
 
-    final private ResultCallback<DriveIdResult> idCallback = new ResultCallback<DriveIdResult>() {
-        @Override
-        public void onResult(DriveIdResult result) {
-            new RetrieveDriveFileContentsAsyncTask(
-                    RetrieveContentsActivity.this).execute(result.getDriveId());
-        }
-    };
+    final private ResultCallback<DriveApi.MetadataBufferResult> metadataCallback =
+            new ResultCallback<DriveApi.MetadataBufferResult>() {
+                @Override
+                public void onResult(DriveApi.MetadataBufferResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        showMessage("Problem while retrieving results");
+                        return;
+                    }
+
+                    MetadataBuffer metaDatas = result.getMetadataBuffer();
+
+                    for (Metadata m : metaDatas) {
+                        new RetrieveDriveFileContentsAsyncTask(
+                                RetrieveContentsActivity.this).execute(m.getDriveId());
+                    }
+                }
+            };
 
     final private class RetrieveDriveFileContentsAsyncTask
             extends ApiClientAsyncTask<DriveId, Boolean, Bitmap> {
@@ -74,23 +99,12 @@ public class RetrieveContentsActivity extends BaseDemoActivity {
         protected Bitmap doInBackgroundConnected(DriveId... params) {
             Bitmap bitmap = null;
             DriveFile file = Drive.DriveApi.getFile(getGoogleApiClient(), params[0]);
-            DriveContentsResult driveContentsResult =
-                    file.open(getGoogleApiClient(), DriveFile.MODE_READ_ONLY, null).await();
+            DriveContentsResult driveContentsResult = file.open(getGoogleApiClient(), DriveFile.MODE_READ_ONLY, null).await();
             if (!driveContentsResult.getStatus().isSuccess()) {
                 return null;
             }
             DriveContents driveContents = driveContentsResult.getDriveContents();
             bitmap = BitmapFactory.decodeStream(driveContents.getInputStream());
-//            StringBuilder builder = new StringBuilder();
-//            String line;
-//            try {
-//                while ((line = reader.readLine()) != null) {
-//                    builder.append(line);
-//                }
-//                contents = builder.toString();
-//            } catch (IOException e) {
-//                Log.e(TAG, "IOException while reading from the stream", e);
-//            }
 
             driveContents.discard(getGoogleApiClient());
             return bitmap;
