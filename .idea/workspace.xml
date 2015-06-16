@@ -7,7 +7,6 @@
   </component>
   <component name="AndroidLogFilters">
     <option name="TOOL_WINDOW_LOG_LEVEL" value="ERROR" />
-    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6ee2859-1c1f-4d94-82f5-4eff550858a7" name="Default" comment="" />
@@ -1796,7 +1795,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-324" y="-1084" width="1928" height="1088" extended-state="6" />
+    <frame x="-324" y="-1084" width="1928" height="1088" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
